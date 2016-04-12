@@ -1,0 +1,20 @@
+// Protobuf definition of Aquila model inference server.
+
+syntax = "proto3";
+
+package tensorflow.serving;
+
+message AquilaRequest {
+  // JPEG encoded stream of the image to be classified.
+  bytes jpeg_encoded = 1;
+};
+
+message AquilaResponse {
+  // Scores of the valence for the images
+  repeated float valence = 1;
+};
+
+service AquilaService {
+  // Classifies an JPEG image into classes.
+  rpc Classify(AquilaRequest) returns (AquilaResponse);
+}
