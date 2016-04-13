@@ -53,6 +53,13 @@ def export():
     # until the very end, when they're rescaled to (-1, 1).  The various
     # adjust_* ops all require this range for dtype float.
     image = tf.image.convert_image_dtype(image, dtype=tf.float32)
+    # the image has to be resized -- not because it's in the wrong resolution
+    # but so that tensorflow knows how large it is. in the future, we may
+    # want to provide it with arrays and use a float32 placeholder
+    image = tf.expand_dims(image, 0)
+    image = tf.image.resize_bilinear(image,
+                                     [FLAGS.image_size, FLAGS.image_size],
+                                     align_corners=False)
     image = tf.squeeze(image, [0])
     # Aquila 1.0 does not do this, so it's going to be omitted.
     # Finally, rescale to [-1,1] instead of [0, 1)
