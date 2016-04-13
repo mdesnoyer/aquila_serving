@@ -39,6 +39,7 @@ py_binary(
         "aquila_export.py",
     ],
     deps = [
+        #"@aquila_model//aquila",
         "@aquila_model//aquila",
         "@tf//tensorflow:tensorflow_py",
         "//tensorflow_serving/session_bundle:exporter",
