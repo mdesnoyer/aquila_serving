@@ -93,9 +93,35 @@ bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/tensorflow_pkg
 sudo pip install /tmp/tensorflow_pkg/tensorflow-0.7.1-py2-none-linux_x86_64.whl
 
 
-
 # clone aquila
 cd ~
 git clone https://github.com/neon-lab/aquila.git
+
+# NOTES:
+# this is only necessary if you will be bazel-build'ing new models, since you have to protoc their compilers, too.
+
+# while they instal protocol buffers for you, you need protocol buffer compiler > 3.0.0 alpha so let's get that too (blarg)
+cd ~
+wget https://github.com/google/protobuf/releases/download/v3.0.0-beta-2/protobuf-python-3.0.0-beta-2.tar.gz
+tar xvzf protobuf-python-3.0.0-beta-2.tar.gz
+cd protobuf-3.0.0-beta-2
+./configure
+make 
+sudo make install  # sudo appears to be required
+# it appears as thought the default install location is not in the LD Library path for whatever the fuck reason, so 
+# modify your bashrc again with:
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib"
+
+# then source it
+source ~/.bashrc
+
+# assemble Aquila's *_pb2.py files
+# NOTES:
+# You may have to repeat this if you're going to be instantiating new .proto files.
+protoc --proto_path=/home/ubuntu/aquila_serving/tensorflow_serving --python_out=/home/ubuntu/aquila_serving/tensorflow_serving/aquila /home/ubuntu/aquila_serving/tensorflow_serving/aquila/aquila_inference.proto
+
+# now for whatever reason it puts it in the wrong goddamn place
+mv ~/aquila_serving/tensorflow_serving/aquila/aquila/* ~/aquila_serving/tensorflow_serving/aquila/
+rm -r ~/aquila_serving/tensorflow_serving/aquila/aquila
 
 
