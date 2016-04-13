@@ -4,8 +4,9 @@ local_repository(
 )
 
 local_repository(
-  name = "inception_model",
-  path = __workspace_dir__ + "/tf_models/inception",
+  name = “aquila_model”,
+  #path = __workspace_dir__ + "/tf_models/inception",
+  path = “/home/ubuntu/aquila”
 )
 
 load('//tensorflow/tensorflow:workspace.bzl', 'tf_workspace')
