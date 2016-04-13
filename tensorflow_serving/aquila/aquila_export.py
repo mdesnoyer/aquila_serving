@@ -9,7 +9,9 @@ import sys
 
 import tensorflow as tf
 
-from aquila import aquila_model
+sys.path.append('/home/ubuntu')
+
+from aquila.net import aquila_model
 
 from tensorflow_serving.session_bundle import exporter
 
