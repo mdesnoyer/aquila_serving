@@ -5,7 +5,6 @@ local_repository(
 
 local_repository(
   name = “aquila_model”,
-  #path = __workspace_dir__ + "/tf_models/inception",
   path = “/home/ubuntu/aquila”
 )
 
