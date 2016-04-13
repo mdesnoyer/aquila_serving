@@ -12,7 +12,7 @@ from grpc.beta import implementations
 import numpy
 import tensorflow as tf
 
-from tensorflow_serving.example import aquila_inference_pb2
+from tensorflow_serving.aquila import aquila_inference_pb2
 
 
 tf.app.flags.DEFINE_string('server', 'localhost:9000',

@@ -33,17 +33,17 @@ serving_proto_library(
     cc_grpc_version = 1,
 )
 
-#py_binary(
-#    name = "aquila_export",
-#    srcs = [
-#        "aquila_export.py",
-#    ],
-#    deps = [
-#        "@aquila_model//aquila",
-#        "@tf//tensorflow:tensorflow_py",
-#        "//tensorflow_serving/session_bundle:exporter",
-#    ],
-#)
+py_binary(
+    name = "aquila_export",
+    srcs = [
+        "aquila_export.py",
+    ],
+    deps = [
+        "@aquila_model//aquila",
+        "@tf//tensorflow:tensorflow_py",
+        "//tensorflow_serving/session_bundle:exporter",
+    ],
+)
 
 cc_binary(
     name = "aquila_inference",
@@ -72,15 +72,15 @@ cc_binary(
     ],
 )
 
-#py_binary(
-#    name = "aquila_client",
-#    srcs = [
-#        "aquila_client.py",
-#        "aquila_inference_pb2.py",
-#    ],
-#    data = [
-#        "imagenet_lsvrc_2015_synsets.txt",
-#        "imagenet_metadata.txt",
-#    ],
-#    deps = ["@tf//tensorflow:tensorflow_py"],
-#)
+py_binary(
+    name = "aquila_client",
+    srcs = [
+        "aquila_client.py",
+        "aquila_inference_pb2.py",
+    ],
+    data = [
+        "imagenet_lsvrc_2015_synsets.txt",
+        "imagenet_metadata.txt",
+    ],
+    deps = ["@tf//tensorflow:tensorflow_py"],
+)

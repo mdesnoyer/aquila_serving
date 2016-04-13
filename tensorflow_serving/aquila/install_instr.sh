@@ -71,7 +71,7 @@ git checkout tags/0.2.1  # note you can check the tags with git tag -l, you need
 sudo cp output/bazel /usr/bin
 
 
-# more CUDA stuff
+# more CUDA stuff - edit ~/.bashrc to put this in!
 export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64"
 export CUDA_HOME=/usr/local/cuda
 
@@ -87,12 +87,15 @@ bazel build tensorflow_serving/...  # build the whole source tree - this will ta
 
 
 # convert tensorflow into a pip repo
+cd tensorflow
 bazel build -c opt --config=cuda //tensorflow/tools/pip_package:build_pip_package
 bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/tensorflow_pkg
-pip install /tmp/tensorflow_pkg/tensorflow-0.7.1-py2-none-linux_x86_64.whl
+sudo pip install /tmp/tensorflow_pkg/tensorflow-0.7.1-py2-none-linux_x86_64.whl
+
 
 
 # clone aquila
+cd ~
 git clone https://github.com/neon-lab/aquila.git
 
 
