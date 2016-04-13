@@ -78,9 +78,5 @@ py_binary(
         "aquila_client.py",
         "aquila_inference_pb2.py",
     ],
-    data = [
-        "imagenet_lsvrc_2015_synsets.txt",
-        "imagenet_metadata.txt",
-    ],
     deps = ["@tf//tensorflow:tensorflow_py"],
 )
