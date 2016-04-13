@@ -5,7 +5,7 @@ local_repository(
 
 local_repository(
   name = “aquila_model”,
-  path = “/home/ubuntu/aquila”
+  path = “/home/ubuntu/aquila”,
 )
 
 load('//tensorflow/tensorflow:workspace.bzl', 'tf_workspace')
