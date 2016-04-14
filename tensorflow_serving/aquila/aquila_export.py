@@ -42,7 +42,8 @@ def export():
 
     # Input transformation.
     # TODO(b/27776734): Add batching support.
-    jpegs = tf.placeholder(tf.float32, shape=(FLAGS.image_size, FLAGS.image_size, 3))
+    # jpegs = tf.placeholder(tf.float32, shape=(FLAGS.image_size, FLAGS.image_size, 3))
+    jpegs = tf.placeholder(tf.string, shape=(1))
     image_buffer = tf.squeeze(jpegs, [0])
     # Decode the string as an RGB JPEG.
     # Note that the resulting image contains an unknown height and width
