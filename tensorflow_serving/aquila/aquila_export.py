@@ -93,8 +93,7 @@ def export():
 
       # Export inference model.
       model_exporter = exporter.Exporter(saver)
-      signature = exporter.classification_signature(
-          input_tensor=jpegs, valence_tensor=logits)
+      signature = exporter.regression_signature(jpegs, logits)
       model_exporter.init(default_graph_signature=signature)
       model_exporter.export(FLAGS.export_dir, tf.constant(global_step), sess)
       print('Successfully exported model to %s' % FLAGS.export_dir)
