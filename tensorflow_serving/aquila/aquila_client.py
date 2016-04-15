@@ -33,10 +33,7 @@ def main(_):
     data = f.read()
     request = aquila_inference_pb2.AquilaRequest()
     request.jpeg_encoded = data
-    result = stub.Classify(request, 10.0)  # 10 secs timeout
-    for i in range(NUM_CLASSES):
-      index = result.classes[i]
-      score = result.scores[i]
+    result = stub.Regress(request, 10.0)  # 10 secs timeout
     print 'Computed image valence: %.2f' % (result.valence)
 
 
