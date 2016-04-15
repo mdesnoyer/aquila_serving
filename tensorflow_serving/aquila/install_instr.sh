@@ -1,3 +1,8 @@
+#															   #
+# ARE YOU READY FOR THE BIGGEST ORDEAL OF YOUR LIFE?? HOPE SO! #
+#															   #
+
+
 # NOTE: This will require more than the default (8gb) amount of space afforded to new instances. Make sure you increase it!
 
 # Install various packages
@@ -13,7 +18,7 @@ sudo pip install grpcio
 echo -e "blacklist nouveau\nblacklist lbm-nouveau\noptions nouveau modeset=0\nalias nouveau off\nalias lbm-nouveau off\n" | sudo tee /etc/modprobe.d/blacklist-nouveau.conf
 echo options nouveau modeset=0 | sudo tee -a /etc/modprobe.d/nouveau-kms.conf
 sudo update-initramfs -u
-sudo reboot # Reboot (annoying you have to do this in 2015!)
+sudo reboot # Reboot (annoying you have to do this in 2016!)
 
 
 # Some other annoying thing we have to do
@@ -83,19 +88,12 @@ cd aquila_serving/tensorflow
 # configure tensorflow; unofficial settings are necessary given the GRID compute cap of 3.0
 TF_UNOFFICIAL_SETTING=1 ./configure  # accept the defaults; build with gpu support; set the compute capacity to 3.0
 cd ..
-bazel build tensorflow_serving/...  # build the whole source tree - this will take a bit
-
-
-# convert tensorflow into a pip repo
-cd tensorflow
-bazel build -c opt --config=cuda //tensorflow/tools/pip_package:build_pip_package
-bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/tensorflow_pkg
-sudo pip install /tmp/tensorflow_pkg/tensorflow-0.7.1-py2-none-linux_x86_64.whl
-
 
 # clone aquila
 cd ~
 git clone https://github.com/neon-lab/aquila.git
+# checkout whatever the fuck branch your using
+git checkout some_branch
 
 # NOTES:
 # this is only necessary if you will be bazel-build'ing new models, since you have to protoc their compilers, too.
@@ -124,4 +122,19 @@ protoc --proto_path=/home/ubuntu/aquila_serving/tensorflow_serving --python_out=
 mv ~/aquila_serving/tensorflow_serving/aquila/aquila/* ~/aquila_serving/tensorflow_serving/aquila/
 rm -r ~/aquila_serving/tensorflow_serving/aquila/aquila
 
+# Build TF-Serving
+bazel build tensorflow_serving/...  # build the whole source tree - this will take a bit
+
+
+# convert tensorflow into a pip repo
+cd tensorflow
+bazel build -c opt --config=cuda //tensorflow/tools/pip_package:build_pip_package
+bazel-bin/tensorflow/tools/pip_package/build_pip_package /tmp/tensorflow_pkg
+# install it with pip for some reason
+
+sudo pip install /tmp/tensorflow_pkg/tensorflow-0.7.1-py2-none-linux_x86_64.whl
+
+# to export a model - note, the model directory structure has to be the same as it is when the model was trained!
+cd ~/aquila_serving
+bazel-bin/tensorflow_serving/aquila/aquila_export --checkpoint_dir=/data/aquila_snaps_lowreg --export_dir=/home/ubuntu/exported_model/test
 

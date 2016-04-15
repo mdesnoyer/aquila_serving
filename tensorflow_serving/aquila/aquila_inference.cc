@@ -123,10 +123,10 @@ class AquilaServiceImpl final {
   AquilaServiceImpl(const string& servable_name,
                    UniquePtrWithDeps<tensorflow::serving::Manager> manager);
 
-  void Classify(CallData* call_data);
+  void Regress(CallData* call_data);
 
-  // Produces classifications for a batch of requests and associated responses.
-  void DoClassifyInBatch(
+  // Produces regressions for a batch of requests and associated responses.
+  void DoRegressInBatch(
       std::unique_ptr<tensorflow::serving::Batch<Task>> batch);
 
   // Name of the servable to use for inference.
@@ -153,11 +153,11 @@ CallData::CallData(AquilaServiceImpl* service_impl,
 void CallData::Proceed() {
   if (status_ == CREATE) {
     // As part of the initial CREATE state, we *request* that the system
-    // start processing Classify requests. In this request, "this" acts are
+    // start processing Regression requests. In this request, "this" acts are
     // the tag uniquely identifying the request (so that different CallData
     // instances can serve different requests concurrently), in this case
     // the memory address of this CallData instance.
-    service_->RequestClassify(&ctx_, &request_, &responder_, cq_, cq_, this);
+    service_->RequestRegress(&ctx_, &request_, &responder_, cq_, cq_, this);
     // Make this instance progress to the PROCESS state.
     status_ = PROCESS;
   } else if (status_ == PROCESS) {
@@ -166,7 +166,7 @@ void CallData::Proceed() {
     // part of its FINISH state.
     new CallData(service_impl_, service_, cq_);
     // Start processing.
-    service_impl_->Classify(this);
+    service_impl_->Regress(this);
   } else {
     GPR_ASSERT(status_ == FINISH);
     // Once in the FINISH state, deallocate ourselves (CallData).
@@ -203,7 +203,7 @@ AquilaServiceImpl::AquilaServiceImpl(
   TF_CHECK_OK(tensorflow::serving::CreateRetryingStreamingBatchScheduler<Task>(
       scheduler_options, retry_options,
       [this](std::unique_ptr<tensorflow::serving::Batch<Task>> batch) {
-        this->DoClassifyInBatch(std::move(batch));
+        this->DoRegressInBatch(std::move(batch));
       },
       &batch_scheduler_));
 }
@@ -214,7 +214,7 @@ Status ToGRPCStatus(const tensorflow::Status& status) {
                 status.error_message());
 }
 
-void AquilaServiceImpl::Classify(CallData* calldata) {
+void AquilaServiceImpl::Regress(CallData* calldata) {
   // Create and submit a task to the batch scheduler.
   std::unique_ptr<Task> task(new Task(calldata));
   tensorflow::Status status = batch_scheduler_->Schedule(&task);
@@ -225,8 +225,8 @@ void AquilaServiceImpl::Classify(CallData* calldata) {
   }
 }
 
-// Produces classifications for a batch of requests and associated responses.
-void AquilaServiceImpl::DoClassifyInBatch(
+// Produces regressions for a batch of requests and associated responses.
+void AquilaServiceImpl::DoRegressInBatch(
     std::unique_ptr<tensorflow::serving::Batch<Task>> batch) {
   batch->WaitUntilClosed();
   if (batch->empty()) {

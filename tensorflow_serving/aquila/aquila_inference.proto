@@ -16,5 +16,5 @@ message AquilaResponse {
 
 service AquilaService {
   // Classifies an JPEG image into classes.
-  rpc Classify(AquilaRequest) returns (AquilaResponse);
+  rpc Regress(AquilaRequest) returns (AquilaResponse);
 }
