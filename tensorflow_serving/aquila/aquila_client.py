@@ -34,7 +34,7 @@ def main(_):
     request = aquila_inference_pb2.AquilaRequest()
     request.jpeg_encoded = data
     result = stub.Regress(request, 10.0)  # 10 secs timeout
-    print 'Computed image valence: %.2f' % (result.valence)
+    print 'Computed image valence: %.2f' % (result.valence[0])
 
 
 if __name__ == '__main__':
