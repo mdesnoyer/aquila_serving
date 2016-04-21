@@ -8,10 +8,18 @@
 # Install various packages
 sudo apt-get update
 sudo apt-get upgrade -y
-sudo apt-get install -y build-essential curl libfreetype6-dev libpng12-dev libzmq3-dev pkg-config python-pip python-dev git python-numpy python-scipy swig software-properties-common  python-dev default-jdk zip zlib1g-dev ipython
-
+sudo apt-get install -y build-essential curl libfreetype6-dev libpng12-dev libzmq3-dev pkg-config python-pip python-dev git python-numpy python-scipy swig software-properties-common  python-dev default-jdk zip zlib1g-dev ipython autoconf libtool
 # upgrade six & install gRPC systemwide
 sudo pip install --upgrade six
+
+# installing grpcio isn't sufficient if you intend on compiling new *_pb2.py files. You need to build from source.
+git clone https://github.com/grpc/grpc.git
+cd grpc
+git submodule update --init
+make -j4
+make install
+
+# now you can install grpcio
 sudo pip install grpcio
 
 # Blacklist Noveau which has some kind of conflict with the nvidia driver
@@ -116,11 +124,8 @@ source ~/.bashrc
 # assemble Aquila's *_pb2.py files
 # NOTES:
 # You may have to repeat this if you're going to be instantiating new .proto files.
-protoc --proto_path=/home/ubuntu/aquila_serving/tensorflow_serving --python_out=/home/ubuntu/aquila_serving/tensorflow_serving/aquila /home/ubuntu/aquila_serving/tensorflow_serving/aquila/aquila_inference.proto
-
-# now for whatever reason it puts it in the wrong goddamn place
-mv ~/aquila_serving/tensorflow_serving/aquila/aquila/* ~/aquila_serving/tensorflow_serving/aquila/
-rm -r ~/aquila_serving/tensorflow_serving/aquila/aquila
+# navigate to the directory which contains the .proto files
+protoc -I ./ --python_out=. --grpc_out=. --plugin=protoc-gen-grpc=`which grpc_python_plugin` ./aquila_inference.proto
 
 # Build TF-Serving
 bazel build tensorflow_serving/...  # build the whole source tree - this will take a bit
@@ -137,4 +142,50 @@ sudo pip install /tmp/tensorflow_pkg/tensorflow-0.7.1-py2-none-linux_x86_64.whl
 # to export a model - note, the model directory structure has to be the same as it is when the model was trained!
 cd ~/aquila_serving
 bazel-bin/tensorflow_serving/aquila/aquila_export --checkpoint_dir=/data/aquila_snaps_lowreg --export_dir=/home/ubuntu/exported_model/test
+
+# to run the server
+cd ~
+aquila_serving/bazel-bin/tensorflow_serving/aquila/aquila_inference --port=9000 exported_model/test &> aquila_log &
+
+# test the model
+time aquila_serving/bazel-bin/tensorflow_serving/aquila/aquila_client --image "lena30.jpg"
+
+# aquila:
+# real	0m13.621s
+# user	0m0.994s
+# sys	0m0.161s
+
+aquila_serving/bazel-bin/tensorflow_serving/example/inception_inference --port=9000 inception-export &> inception_log &
+time aquila_serving/bazel-bin/tensorflow_serving/example/inception_client --server=localhost:9000 --image "lena30.jpg"
+
+# inception:
+# real	0m9.061s
+# user	0m0.936s
+# sys	0m0.120s
+
+# also:
+# 6.125876 : cloak
+# 5.997998 : brassiere, bra, bandeau
+# 5.059655 : bonnet, poke bonnet
+# 5.021771 : maillot
+# 4.814725 : bath towel
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
