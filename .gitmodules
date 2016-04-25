@@ -6,4 +6,4 @@
 	url = https://github.com/tensorflow/models.git
 [submodule "aquila"]
 	path = aquila
-	url = git@github.com:neon-lab/aquila.git
+	url = https://github.com/neon-lab/aquila.git
