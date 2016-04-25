@@ -4,3 +4,6 @@
 [submodule "tf_models"]
 	path = tf_models
 	url = https://github.com/tensorflow/models.git
+[submodule "aquila"]
+	path = aquila
+	url = git@github.com:neon-lab/aquila.git
