@@ -40,12 +40,12 @@ limitations under the License.
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/framework/tensor_types.h"
 #include "tensorflow/core/framework/types.pb.h"
-#include "tensorflow/core/lib/core/command_line_flags.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/lib/strings/strcat.h"
 #include "tensorflow/core/platform/env.h"
 #include "tensorflow/core/platform/init_main.h"
 #include "tensorflow/core/platform/types.h"
+#include "tensorflow/core/util/command_line_flags.h"
 #include "tensorflow_serving/batching/batch_scheduler.h"
 #include "tensorflow_serving/batching/batch_scheduler_retrier.h"
 #include "tensorflow_serving/batching/streaming_batch_scheduler.h"
@@ -58,7 +58,6 @@ limitations under the License.
 #include "tensorflow_serving/session_bundle/manifest.pb.h"
 #include "tensorflow_serving/session_bundle/session_bundle.h"
 #include "tensorflow_serving/session_bundle/signature.h"
-#include "tensorflow_serving/util/unique_ptr_with_deps.h"
 
 using grpc::InsecureServerCredentials;
 using grpc::Server;
@@ -74,9 +73,6 @@ using tensorflow::serving::InceptionService;
 using tensorflow::string;
 using tensorflow::Tensor;
 using tensorflow::serving::ClassificationSignature;
-using tensorflow::serving::UniquePtrWithDeps;
-
-TF_DEFINE_int32(port, 0, "Port server listening on.");
 
 const int kNumTopClasses = 5;
 
@@ -139,7 +135,7 @@ struct Task : public tensorflow::serving::BatchTask {
 class InceptionServiceImpl final {
  public:
   InceptionServiceImpl(const string& servable_name,
-                   UniquePtrWithDeps<tensorflow::serving::Manager> manager);
+                       std::unique_ptr<tensorflow::serving::Manager> manager);
 
   void Classify(CallData* call_data);
 
@@ -150,7 +146,7 @@ class InceptionServiceImpl final {
   // Name of the servable to use for inference.
   const string servable_name_;
   // Manager in charge of loading and unloading servables.
-  UniquePtrWithDeps<tensorflow::serving::Manager> manager_;
+  std::unique_ptr<tensorflow::serving::Manager> manager_;
   // A scheduler for batching multiple request calls into single calls to
   // Session->Run().
   std::unique_ptr<tensorflow::serving::BatchScheduler<Task>> batch_scheduler_;
@@ -199,7 +195,7 @@ void CallData::Finish(Status status) {
 
 InceptionServiceImpl::InceptionServiceImpl(
     const string& servable_name,
-    UniquePtrWithDeps<tensorflow::serving::Manager> manager)
+    std::unique_ptr<tensorflow::serving::Manager> manager)
     : servable_name_(servable_name), manager_(std::move(manager)) {
   // Setup a batcher used to combine multiple requests (tasks) into a single
   // graph run for efficiency.
@@ -336,7 +332,7 @@ void HandleRpcs(InceptionServiceImpl* service_impl,
 
 // Runs InceptionService server until shutdown.
 void RunServer(const int port, const string& servable_name,
-               UniquePtrWithDeps<tensorflow::serving::Manager> manager) {
+               std::unique_ptr<tensorflow::serving::Manager> manager) {
   // "0.0.0.0" is the way to listen on localhost in gRPC.
   const string server_address = "0.0.0.0:" + std::to_string(port);
 
@@ -357,11 +353,13 @@ void RunServer(const int port, const string& servable_name,
 
 int main(int argc, char** argv) {
   // Parse command-line options.
-  tensorflow::Status s = tensorflow::ParseCommandLineFlags(&argc, argv);
-  if (!s.ok()) {
-    LOG(ERROR) << "Error parsing command line flags: " << s.ToString();
-    return -1;
+  tensorflow::int32 port = 0;
+  const bool parse_result =
+      tensorflow::ParseFlags(&argc, argv, {tensorflow::Flag("port", &port)});
+  if (!parse_result) {
+    LOG(FATAL) << "Error parsing command line flags.";
   }
+
   if (argc != 2) {
     LOG(ERROR) << "Usage: inception_inference --port=9000 /path/to/exports";
     return -1;
@@ -369,7 +367,7 @@ int main(int argc, char** argv) {
   const string export_base_path(argv[1]);
   tensorflow::port::InitMain(argv[0], &argc, &argv);
 
-  UniquePtrWithDeps<tensorflow::serving::Manager> manager;
+  std::unique_ptr<tensorflow::serving::Manager> manager;
   tensorflow::Status status = tensorflow::serving::simple_servers::
       CreateSingleTFModelManagerFromBasePath(export_base_path, &manager);
 
@@ -385,7 +383,7 @@ int main(int argc, char** argv) {
   } while (ready_ids.empty());
 
   // Run the service.
-  RunServer(FLAGS_port, ready_ids[0].name, std::move(manager));
+  RunServer(port, ready_ids[0].name, std::move(manager));
 
   return 0;
 }

@@ -13,29 +13,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#include "tensorflow_serving/core/eager_load_policy.h"
+#include "tensorflow_serving/core/test_util/manager_test_util.h"
 
 namespace tensorflow {
 namespace serving {
+namespace test_util {
 
-optional<AspiredVersionPolicy::ServableAction> EagerLoadPolicy::GetNextAction(
-    const std::vector<AspiredServableStateSnapshot>& all_versions) const {
-  // If there is a new aspired version, load it.
-  for (const auto& version : all_versions) {
-    if (version.is_aspired && version.state == LoaderHarness::State::kNew) {
-      return {{Action::kLoad, version.id}};
-    }
-  }
+AspiredVersionsManagerTestAccess::AspiredVersionsManagerTestAccess(
+    AspiredVersionsManager* manager)
+    : manager_(manager) {}
 
-  // If there is no new aspired version, but a not-aspired version, unload the
-  // latter.
-  for (const auto& version : all_versions) {
-    if (!version.is_aspired && version.state == LoaderHarness::State::kReady) {
-      return {{Action::kUnload, version.id}};
-    }
-  }
-  return {};
+void AspiredVersionsManagerTestAccess::RunManageState() {
+  manager_->ManageState();
 }
 
+}  // namespace test_util
 }  // namespace serving
 }  // namespace tensorflow

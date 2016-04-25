@@ -23,11 +23,11 @@ loaders directly.
 Of course, whatever kind of data your source emits (whether it is POSIX paths,
 Google Cloud Storage paths, or RPC handles), there needs to be accompanying
 module(s) that are able to load servables based on that. Such modules are called
-`SourceAdapters`. Creating a custom one is described in the `custom_servable`
-document. TensorFlow Serving comes with one for instantiating TensorFlow
-sessions based on paths in file systems that TensorFlow supports. One can add
-support for additional file systems to TensorFlow by extending the
-`RandomAccessFile` abstraction (`tensorflow/core/public/env.h`).
+`SourceAdapters`. Creating a custom one is described in the [Custom
+Servable](custom_servable.md) document. TensorFlow Serving comes with one for
+instantiating TensorFlow sessions based on paths in file systems that TensorFlow
+supports. One can add support for additional file systems to TensorFlow by
+extending the `RandomAccessFile` abstraction (`tensorflow/core/public/env.h`).
 
 This document focuses on creating a source that emits paths in a
 TensorFlow-supported file system. It ends with a walk-through of how to use your
@@ -84,16 +84,16 @@ You will likely want to use your new source module in conjunction with
 (`servables/tensorflow/session_bundle_source_adapter*`), which will interpret
 each path your source emits as a TensorFlow export, and convert each path to a
 loader for a TensorFlow `SessionBundle` servable. You will likely plug the
-`SessionBundle` adapter into a `DynamicManager`, which takes care of actually
-loading and serving the servables. A good illustration of chaining these three
-kinds of modules together to get a working server library is found in
-`servables/tensorflow/simple_servers.cc`. Here is a walk-through of the main
+`SessionBundle` adapter into a `AspiredVersionsManager`, which takes care of
+actually loading and serving the servables. A good illustration of chaining
+these three kinds of modules together to get a working server library is found
+in `servables/tensorflow/simple_servers.cc`. Here is a walk-through of the main
 code flow (with bad error handling; real code should be more careful):
 
 First, create a manager:
 
 ~~~c++
-std::unique_ptr<DynamicManager> manager = ...;
+std::unique_ptr<AspiredVersionsManager> manager = ...;
 ~~~
 
 Then, create a `SessionBundle` source adapter and plug it into the manager:
