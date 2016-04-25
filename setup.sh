@@ -45,21 +45,30 @@ sudo pip install grpcio
 # upgrade Pillow
 sudo pip install --upgrade Pillow
 ​
+# NOTE: THIS MAY NOT BE NECESSARY
 # upgrade numpy so that it has the tobytes method
 sudo pip install numpy --upgrade
 ​
+
+# --- WARNING ---
+# WILL RESTART AFTER YOU ISSUE THIS COMMAND
+# ---------------
 # Blacklist Noveau which has some kind of conflict with the nvidia driver
-echo -e "blacklist nouveau\nblacklist lbm-nouveau\noptions nouveau modeset=0\nalias nouveau off\nalias lbm-nouveau off\n" | sudo tee /etc/modprobe.d/blacklist-nouveau.conf
-echo options nouveau modeset=0 | sudo tee -a /etc/modprobe.d/nouveau-kms.conf
-sudo update-initramfs -u
-sudo reboot # Reboot (annoying you have to do this in 2016!)
+# Also, you'll have to reboot (annoying you have to do this in 2016!)
+echo -e "blacklist nouveau\nblacklist lbm-nouveau\noptions nouveau modeset=0\nalias nouveau off\nalias lbm-nouveau off\n" | sudo tee /etc/modprobe.d/blacklist-nouveau.conf && echo options nouveau modeset=0 | sudo tee -a /etc/modprobe.d/nouveau-kms.conf && sudo update-initramfs -u && sudo reboot 
 ​
 ​
+# --- WARNING ---
+# WILL RESTART AFTER YOU ISSUE THIS COMMAND
+# ---------------
+# NOTE: /dev/xvdf and /dev/xvdb are the most common. make sure you change it appropriately!
+sudo mount /dev/xvdb /data 
 # Some other annoying thing we have to do
-sudo mount /dev/xvdf /data && sudo apt-get install -y linux-image-extra-virtual && sudo reboot # Not sure why this is needed
+sudo apt-get install -y linux-image-extra-virtual && sudo reboot # Not sure why this is needed
 ​
 # remount the EBS volume:
-sudo mount /dev/xvdf /data
+# NOTE: /dev/xvdf and /dev/xvdb are the most common. make sure you change it appropriately!
+sudo mount /dev/xvdb /data
 ​
 ​
 # Install latest Linux headers
@@ -67,9 +76,8 @@ sudo apt-get install -y linux-source linux-headers-`uname -r`
 ​
 ​
 # Install CUDA 7.0 (note – don't use any other version)
-cd /data
-chmod +x cuda_7.0.28_linux.run
-./cuda_7.0.28_linux.run -extract=`pwd`/nvidia_installers
+# you should've already put it in /data
+cd /data && chmod +x cuda_7.0.28_linux.run && ./cuda_7.0.28_linux.run -extract=`pwd`/nvidia_installers
 # accept everything it wants to do 
 cd nvidia_installers && sudo ./NVIDIA-Linux-x86_64-346.46.run 
 sudo modprobe nvidia
@@ -83,7 +91,7 @@ sudo cp cudnn-6.5-linux-x64-v2/libcudnn* /usr/local/cuda/lib64 && sudo cp cudnn-
 ​
 # OPTIONAL
 # To increase free space, remove cuda install file & nvidia_installers
-cd 
+cd /data
 rm -v cuda_7.0.28_linux.run
 rm -rfv nvidia_installers/
 ​
@@ -94,10 +102,9 @@ sudo apt-get update && sudo apt-get install oracle-java8-set-default
 ​
 ​
 # install Bazel
-git clone https://github.com/bazelbuild/bazel.git
+cd /data && git clone https://github.com/bazelbuild/bazel.git
 # note you can check the tags with git tag -l, you need at least 0.2.0
-cd bazel && git checkout tags/0.2.1 
-./compile.sh
+cd bazel && git checkout tags/0.2.1 && ./compile.sh
 sudo cp output/bazel /usr/bin
 # used space: 4.5 gb
 ​
@@ -122,8 +129,8 @@ cd protobuf-3.0.0-beta-2 && ./configure && make -j8 && sudo make install
 # used space: 
 ​
 # install tensorflow / tensorflow serving
-cd /data && git clone --recurse-submodules https://github.com/eriophora/serving.git
-cd serving && git checkout batch_inception
+cd /data && git clone --recurse-submodules https://github.com/neon-lab/aquila_serving.git
+cd aquila_serving/aquila && git checkout mod_for_serving && cd ..
 # IMPORTANT:
 # Tensorflow Serving will fail to build on AWS w/ CUDA without editing
 # ./tensorflow/third_party/gpus_crosstool/CROSSTOOL
@@ -138,8 +145,8 @@ cd ..
 # NOTES:
 # You may have to repeat this if you're going to be instantiating new .proto files.
 # navigate to the directory which contains the .proto files
-cd tensorflow_serving/example/
-protoc -I ./ --python_out=. --grpc_out=. --plugin=protoc-gen-grpc=`which grpc_python_plugin` ./inception_inference.proto
+cd tensorflow_serving/aquila/
+protoc -I ./ --python_out=. --grpc_out=. --plugin=protoc-gen-grpc=`which grpc_python_plugin` ./aquila_inference.proto
 ​
 # Build TF-Serving
 cd /data/serving
