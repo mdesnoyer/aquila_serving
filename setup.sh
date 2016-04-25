@@ -133,7 +133,7 @@ cd /data && git clone --recurse-submodules https://github.com/neon-lab/aquila_se
 cd aquila_serving/aquila && git checkout mod_for_serving && cd ..
 # IMPORTANT:
 # Tensorflow Serving will fail to build on AWS w/ CUDA without editing
-# ./tensorflow/third_party/gpus_crosstool/CROSSTOOL
+# ./tensorflow/third_party/gpus/crosstool/CROSSTOOL
 # add the line:
 # cxx_builtin_include_directory: "/usr/local/cuda-7.0/include"
 cd tensorflow
@@ -149,8 +149,9 @@ cd tensorflow_serving/aquila/
 protoc -I ./ --python_out=. --grpc_out=. --plugin=protoc-gen-grpc=`which grpc_python_plugin` ./aquila_inference.proto
 ​
 # Build TF-Serving
-cd /data/serving
-bazel --output_base=/data/.cache/bazel/_bazel_$USER build tensorflow_serving/...  # build the whole source tree - this will take a bit
+cd /data/aquila_serving
+# build the whole source tree - this will take a bit
+bazel --output_base=/data/.cache/bazel/_bazel_$USER build -c opt --config=cuda tensorflow_serving/...
 ​
 ​
 # convert tensorflow into a pip repo
