@@ -37,36 +37,16 @@ NUM_OUTPUTS = 1
 
 def export():
   with tf.Graph().as_default():
-    # Build inference model.
+    # Build Aquila model.
     # Please refer to Tensorflow inception model for details.
 
-    # Input transformation.
-    # TODO(b/27776734): Add batching support.
-    # jpegs = tf.placeholder(tf.float32, shape=(FLAGS.image_size, FLAGS.image_size, 3))
-    jpegs = tf.placeholder(tf.string, shape=(1))
-    image_buffer = tf.squeeze(jpegs, [0])
-    # Decode the string as an RGB JPEG.
-    # Note that the resulting image contains an unknown height and width
-    # that is set dynamically by decode_jpeg. In other words, the height
-    # and width of image is unknown at compile-time.
-    image = tf.image.decode_jpeg(image_buffer, channels=3)
-    # After this point, all image pixels reside in [0,1)
-    # until the very end, when they're rescaled to (-1, 1).  The various
-    # adjust_* ops all require this range for dtype float.
-    image = tf.image.convert_image_dtype(image, dtype=tf.float32)
-    # the image has to be resized -- not because it's in the wrong resolution
-    # but so that tensorflow knows how large it is. in the future, we may
-    # want to provide it with arrays and use a float32 placeholder
-    image = tf.expand_dims(image, 0)
-    image = tf.image.resize_bilinear(image,
-                                     [FLAGS.image_size, FLAGS.image_size],
-                                     align_corners=False)
-    image = tf.squeeze(image, [0])
-    # Aquila 1.0 does not do this, so it's going to be omitted.
-    # Finally, rescale to [-1,1] instead of [0, 1)
-    # image = tf.sub(image, 0.5)
-    # image = tf.mul(image, 2.0)
-    images = tf.expand_dims(image, 0)
+    flat_image_size = 3 * FLAGS.image_size ** 2
+    input_data = tf.placeholder(tf.float32, shape=(None, flat_image_size))
+    # reshape the images appropriately
+    images = tf.reshape(input_data, (-1,
+                                     FLAGS.image_size,
+                                     FLAGS.image_size,
+                                     3))
 
     # Run inference.
     logits, _ = aquila_model.inference(images, for_training=False, restore_logits=True)

@@ -41,7 +41,6 @@
 #include "tensorflow_serving/session_bundle/manifest.pb.h"
 #include "tensorflow_serving/session_bundle/session_bundle.h"
 #include "tensorflow_serving/session_bundle/signature.h"
-#include "tensorflow_serving/util/unique_ptr_with_deps.h"
 
 using grpc::InsecureServerCredentials;
 using grpc::Server;
@@ -57,11 +56,12 @@ using tensorflow::serving::AquilaService;
 using tensorflow::string;
 using tensorflow::Tensor;
 using tensorflow::serving::RegressionSignature;
-using tensorflow::serving::UniquePtrWithDeps;
-
-TF_DEFINE_int32(port, 0, "Port server listening on.");
 
 namespace {
+const int kImageSize = 299;
+const int kNumChannels = 3;
+const int kImageDataSize = kImageSize * kImageSize * kNumChannels;
+
 class AquilaServiceImpl;
 
 // Class encompassing the state and logic needed to serve a request.
@@ -195,9 +195,10 @@ AquilaServiceImpl::AquilaServiceImpl(
   // specific graph structure and usage.
   tensorflow::serving::StreamingBatchScheduler<Task>::Options scheduler_options;
   scheduler_options.thread_pool_name = "aquila_service_batch_threads";
-  // TODO(27776734): Current exported model supports only batch_size=1
-  // See aquila_export.py for details.
-  scheduler_options.max_batch_size = 1;
+  tensorflow::serving::StreamingBatchScheduler<Task>::Options scheduler_options;
+  scheduler_options.batch_timeout_micros = 1000 * 1000;  // 1 second
+  scheduler_options.num_batch_threads = 4;
+  scheduler_options.max_batch_size = 22;
   tensorflow::serving::BatchSchedulerRetrier<Task>::Options retry_options;
   // Retain the default retry options.
   TF_CHECK_OK(tensorflow::serving::CreateRetryingStreamingBatchScheduler<Task>(
@@ -269,10 +270,15 @@ void AquilaServiceImpl::DoRegressInBatch(
   }
 
   // Transform protobuf input to inference input tensor.
-  tensorflow::Tensor batched_input(tensorflow::DT_STRING, {batch_size});
+  tensorflow::Tensor input(tensorflow::DT_FLOAT, {batch_size, kImageDataSize});
+  auto dst = input.flat_outer_dims<float>().data();
+  // Assemble the batch into a tensor, copying it from the batch data to
+  // the input tensor at location dst repeatedly for each item in the batch
   for (int i = 0; i < batch_size; ++i) {
-    batched_input.vec<string>()(i) =
-        batch->mutable_task(i)->calldata->request().jpeg_encoded();
+    std::copy_n(
+        batch->mutable_task(i)->calldata->request().image_data().begin(),
+        kImageDataSize, dst);
+    dst += kImageDataSize;
   }
 
   // Run regression.
@@ -313,7 +319,7 @@ void HandleRpcs(AquilaServiceImpl* service_impl,
 
 // Runs AquilaService server until shutdown.
 void RunServer(const int port, const string& servable_name,
-               UniquePtrWithDeps<tensorflow::serving::Manager> manager) {
+               std::unique_ptr<tensorflow::serving::Manager> manager) {
   // "0.0.0.0" is the way to listen on localhost in gRPC.
   const string server_address = "0.0.0.0:" + std::to_string(port);
 
