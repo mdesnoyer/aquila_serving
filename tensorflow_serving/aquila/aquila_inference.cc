@@ -195,7 +195,6 @@ AquilaServiceImpl::AquilaServiceImpl(
   // specific graph structure and usage.
   tensorflow::serving::StreamingBatchScheduler<Task>::Options scheduler_options;
   scheduler_options.thread_pool_name = "aquila_service_batch_threads";
-  tensorflow::serving::StreamingBatchScheduler<Task>::Options scheduler_options;
   scheduler_options.batch_timeout_micros = 1000 * 1000;  // 1 second
   scheduler_options.num_batch_threads = 4;
   scheduler_options.max_batch_size = 22;
