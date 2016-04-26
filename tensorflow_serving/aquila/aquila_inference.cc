@@ -121,7 +121,7 @@ struct Task : public tensorflow::serving::BatchTask {
 class AquilaServiceImpl final {
  public:
   AquilaServiceImpl(const string& servable_name,
-                   UniquePtrWithDeps<tensorflow::serving::Manager> manager);
+                   std::unique_ptr<tensorflow::serving::Manager> manager);
 
   void Regress(CallData* call_data);
 
@@ -132,7 +132,7 @@ class AquilaServiceImpl final {
   // Name of the servable to use for inference.
   const string servable_name_;
   // Manager in charge of loading and unloading servables.
-  UniquePtrWithDeps<tensorflow::serving::Manager> manager_;
+  std::unique_ptr<tensorflow::serving::Manager> manager_;
   // A scheduler for batching multiple request calls into single calls to
   // Session->Run().
   std::unique_ptr<tensorflow::serving::BatchScheduler<Task>> batch_scheduler_;
@@ -181,7 +181,7 @@ void CallData::Finish(Status status) {
 
 AquilaServiceImpl::AquilaServiceImpl(
     const string& servable_name,
-    UniquePtrWithDeps<tensorflow::serving::Manager> manager)
+    std::unique_ptr<tensorflow::serving::Manager> manager)
     : servable_name_(servable_name), manager_(std::move(manager)) {
   // Setup a batcher used to combine multiple requests (tasks) into a single
   // graph run for efficiency.
@@ -352,7 +352,7 @@ int main(int argc, char** argv) {
   const string export_base_path(argv[1]);
   tensorflow::port::InitMain(argv[0], &argc, &argv);
 
-  UniquePtrWithDeps<tensorflow::serving::Manager> manager;
+  std::unique_ptr<tensorflow::serving::Manager> manager;
   tensorflow::Status status = tensorflow::serving::simple_servers::
       CreateSingleTFModelManagerFromBasePath(export_base_path, &manager);
 
