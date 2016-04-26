@@ -284,7 +284,7 @@ void AquilaServiceImpl::DoRegressInBatch(
   // Run regression.
   tensorflow::Tensor batched_valence;
   const tensorflow::Status run_status =
-      RunRegression(signature, batched_input, bundle->session.get(),
+      RunRegression(signature, input, bundle->session.get(),
                     &batched_valence);
   if (!run_status.ok()) {
     complete_with_error(StatusCode::INTERNAL, run_status.error_message());
