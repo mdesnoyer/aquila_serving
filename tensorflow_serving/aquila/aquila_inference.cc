@@ -340,11 +340,13 @@ void RunServer(const int port, const string& servable_name,
 
 int main(int argc, char** argv) {
   // Parse command-line options.
-  tensorflow::Status s = tensorflow::ParseCommandLineFlags(&argc, argv);
-  if (!s.ok()) {
-    LOG(ERROR) << "Error parsing command line flags: " << s.ToString();
-    return -1;
+  ensorflow::int32 port = 0;
+  const bool parse_result =
+      tensorflow::ParseFlags(&argc, argv, {tensorflow::Flag("port", &port)});
+  if (!parse_result) {
+    LOG(FATAL) << "Error parsing command line flags.";
   }
+
   if (argc != 2) {
     LOG(ERROR) << "Usage: aquila_inference --port=9000 /path/to/exports";
     return -1;
@@ -368,7 +370,7 @@ int main(int argc, char** argv) {
   } while (ready_ids.empty());
 
   // Run the service.
-  RunServer(FLAGS_port, ready_ids[0].name, std::move(manager));
+  RunServer(port, ready_ids[0].name, std::move(manager));
 
   return 0;
 }
